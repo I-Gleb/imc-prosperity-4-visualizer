@@ -4,7 +4,6 @@ import { ScrollableCodeHighlight } from '../../components/ScrollableCodeHighligh
 import { Algorithm, AlgorithmDataRow } from '../../models.ts';
 import { formatNumber } from '../../utils/format.ts';
 import { ConversionObservationsTable } from './ConversionObservationsTable.tsx';
-import { ListingsTable } from './ListingsTable.tsx';
 import { OrderDepthTable } from './OrderDepthTable.tsx';
 import { OrdersTable } from './OrdersTable.tsx';
 import { PlainValueObservationsTable } from './PlainValueObservationsTable.tsx';
@@ -136,27 +135,44 @@ export function TimestampDetail(props: TimestampDetailProps): ReactNode {
     return (
       <Grid columns={12}>
         <Grid.Col span={12}>
-          {/* prettier-ignore */}
-          <Title order={5}>
+          <Title order={4}>
             Timestamp {formatNumber(state.timestamp)} • Profit / Loss: {formatNumber(profitLoss)} •
             Conversions: {formatNumber(conversions)}
           </Title>
         </Grid.Col>
-        <Grid.Col span={{ xs: 12, sm: 4 }}>
-          <Title order={5}>Listings</Title>
-          <ListingsTable listings={state.listings} />
+        <Grid.Col span={12}>
+          <Paper withBorder p="md">
+            <Grid>
+              <Grid.Col span={{ xs: 12, sm: 4 }}>
+                <ComparisonSection title="Positions">
+                  <PositionTable position={state.position} />
+                </ComparisonSection>
+              </Grid.Col>
+              <Grid.Col span={{ xs: 12, sm: 4 }}>
+                <ComparisonSection title="Profit / Loss">
+                  <ProfitLossTable timestamp={state.timestamp} algorithm={algorithm} />
+                </ComparisonSection>
+              </Grid.Col>
+              <Grid.Col span={{ xs: 12, sm: 4 }}>
+                <ComparisonSection title="Orders">
+                  <OrdersTable orders={orders} />
+                </ComparisonSection>
+              </Grid.Col>
+              <Grid.Col span={{ xs: 12, sm: 6 }}>
+                <ComparisonSection title="Most Recent Own trades">
+                  <TradesTable trades={state.ownTrades} />
+                </ComparisonSection>
+              </Grid.Col>
+              <Grid.Col span={{ xs: 12, sm: 6 }}>
+                <ComparisonSection title="Most Recent Market trades">
+                  <TradesTable trades={state.marketTrades} />
+                </ComparisonSection>
+              </Grid.Col>
+            </Grid>
+          </Paper>
         </Grid.Col>
-        <Grid.Col span={{ xs: 12, sm: 4 }}>
-          <Title order={5}>Positions</Title>
-          <PositionTable position={state.position} />
-        </Grid.Col>
-        <Grid.Col span={{ xs: 12, sm: 4 }}>
-          <Title order={5}>Profit / Loss</Title>
-          <ProfitLossTable timestamp={state.timestamp} algorithm={algorithm} />
-        </Grid.Col>
-        <Grid.Col span={{ xs: 12, sm: 4 }}>
-          <Title order={5}>Most Recent Own trades</Title>
-          <TradesTable trades={state.ownTrades} />
+        <Grid.Col span={12}>
+          <Title order={4}>Market Snapshot</Title>
         </Grid.Col>
         {Object.entries(state.orderDepths).map(([symbol, orderDepth], i) => (
           <Grid.Col key={i} span={{ xs: 12, sm: 4 }}>
@@ -167,20 +183,15 @@ export function TimestampDetail(props: TimestampDetailProps): ReactNode {
         {Object.keys(state.orderDepths).length % 3 <= 2 && <Grid.Col span={{ xs: 12, sm: 4 }} />}
         {Object.keys(state.orderDepths).length % 3 <= 1 && <Grid.Col span={{ xs: 12, sm: 4 }} />}
         <Grid.Col span={{ xs: 12, sm: 4 }}>
-          <Title order={5}>Most Recent Market trades</Title>
-          <TradesTable trades={state.marketTrades} />
-        </Grid.Col>
-        <Grid.Col span={{ xs: 12, sm: 4 }}>
-          <Title order={5}>Orders</Title>
-          <OrdersTable orders={orders} />
-        </Grid.Col>
-        <Grid.Col span={{ xs: 12, sm: 4 }}>
           <Title order={5}>Plain value observations</Title>
           <PlainValueObservationsTable plainValueObservations={state.observations.plainValueObservations} />
         </Grid.Col>
         <Grid.Col span={{ xs: 12, sm: 8 }}>
           <Title order={5}>Conversion observations</Title>
           <ConversionObservationsTable conversionObservations={state.observations.conversionObservations} />
+        </Grid.Col>
+        <Grid.Col span={12}>
+          <Title order={4}>Logs and Trader Data</Title>
         </Grid.Col>
         <Grid.Col span={{ xs: 12, sm: 6 }}>
           <Title order={5}>Sandbox logs</Title>
