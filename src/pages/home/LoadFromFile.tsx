@@ -5,9 +5,8 @@ import { ReactNode, useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ErrorAlert } from '../../components/ErrorAlert.tsx';
 import { useAsync } from '../../hooks/use-async.ts';
-import { ResultLog } from '../../models.ts';
 import { useStore } from '../../store.ts';
-import { parseAlgorithmLogs } from '../../utils/algorithm.tsx';
+import { loadAlgorithmFromFile } from '../../utils/loaders.ts';
 import { HomeCard } from './HomeCard.tsx';
 
 function DropzoneContent(): ReactNode {
@@ -29,30 +28,12 @@ export function LoadFromFile(): ReactNode {
   const setAlgorithm = useStore(state => state.setAlgorithm);
 
   const onDrop = useAsync(
-    (files: File[]) =>
-      new Promise<void>((resolve, reject) => {
-        setError(undefined);
-
-        const reader = new FileReader();
-
-        reader.addEventListener('load', () => {
-          try {
-            const resultLog = JSON.parse(reader.result as string) as ResultLog;
-            const algorithm = parseAlgorithmLogs(resultLog);
-            setAlgorithm(algorithm);
-            navigate('/visualizer');
-            resolve();
-          } catch (err: any) {
-            reject(err);
-          }
-        });
-
-        reader.addEventListener('error', () => {
-          reject(new Error('FileReader emitted an error event'));
-        });
-
-        reader.readAsText(files[0]);
-      }),
+    async (files: File[]) => {
+      setError(undefined);
+      const algorithm = await loadAlgorithmFromFile(files[0]);
+      setAlgorithm(algorithm);
+      navigate('/visualizer');
+    },
   );
 
   const onReject = useCallback((rejections: FileRejection[]) => {

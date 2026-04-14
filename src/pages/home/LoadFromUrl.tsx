@@ -1,26 +1,23 @@
 import { Button, Code, Text, TextInput } from '@mantine/core';
-import axios from 'axios';
 import { FormEvent, ReactNode, useCallback, useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ErrorAlert } from '../../components/ErrorAlert.tsx';
 import { useAsync } from '../../hooks/use-async.ts';
-import { ResultLog } from '../../models.ts';
 import { useStore } from '../../store.ts';
-import { parseAlgorithmLogs } from '../../utils/algorithm.tsx';
+import { loadAlgorithmFromUrl } from '../../utils/loaders.ts';
 import { HomeCard } from './HomeCard.tsx';
 
 export function LoadFromUrl(): ReactNode {
   const [url, setUrl] = useState('');
 
-  const algorithm = useStore(state => state.algorithm);
+  const visualizer = useStore(state => state.visualizer);
   const setAlgorithm = useStore(state => state.setAlgorithm);
 
   const navigate = useNavigate();
   const searchParams = useSearchParams()[0];
 
   const loadAlgorithm = useAsync(async (logsUrl: string): Promise<void> => {
-    const logsResponse = await axios.get<ResultLog>(logsUrl);
-    setAlgorithm(parseAlgorithmLogs(logsResponse.data));
+    setAlgorithm(await loadAlgorithmFromUrl(logsUrl));
     navigate(`/visualizer?open=${logsUrl}`);
   });
 
@@ -36,7 +33,7 @@ export function LoadFromUrl(): ReactNode {
   );
 
   useEffect(() => {
-    if (algorithm !== null || loadAlgorithm.loading) {
+    if (visualizer !== null || loadAlgorithm.loading) {
       return;
     }
 

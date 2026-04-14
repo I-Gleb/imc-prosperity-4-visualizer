@@ -2,13 +2,13 @@ import { Button, Grid, Group, Text, Title } from '@mantine/core';
 import { ReactNode } from 'react';
 import { ScrollableCodeHighlight } from '../../components/ScrollableCodeHighlight.tsx';
 import { useAsync } from '../../hooks/use-async.ts';
-import { useStore } from '../../store.ts';
+import { useSingleAlgorithm } from '../../hooks/use-single-algorithm.ts';
 import { downloadAlgorithmLogs, downloadAlgorithmResults } from '../../utils/algorithm.tsx';
 import { formatTimestamp } from '../../utils/format.ts';
 import { VisualizerCard } from './VisualizerCard.tsx';
 
 export function AlgorithmSummaryCard(): ReactNode {
-  const algorithm = useStore(state => state.algorithm)!;
+  const algorithm = useSingleAlgorithm()!;
   const summary = algorithm.summary!;
 
   const downloadLogs = useAsync<void>(async () => {

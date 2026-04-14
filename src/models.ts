@@ -127,6 +127,25 @@ export interface Algorithm {
   tradeHistory: ResultLogTradeHistoryItem[];
 }
 
+export interface ComparisonLabels {
+  left: string;
+  right: string;
+}
+
+export interface SingleVisualizerInput {
+  mode: 'single';
+  algorithm: Algorithm;
+}
+
+export interface ComparisonVisualizerInput {
+  mode: 'comparison';
+  left: Algorithm;
+  right: Algorithm;
+  labels?: ComparisonLabels;
+}
+
+export type VisualizerInput = SingleVisualizerInput | ComparisonVisualizerInput;
+
 export type CompressedListing = [symbol: ProsperitySymbol, product: Product, denomination: Product];
 
 export type CompressedOrderDepth = [buyOrders: Record<number, number>, sellOrders: Record<number, number>];

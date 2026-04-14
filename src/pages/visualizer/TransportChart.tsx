@@ -1,7 +1,7 @@
 import Highcharts from 'highcharts';
 import { ReactNode } from 'react';
 import { ProsperitySymbol } from '../../models.ts';
-import { useStore } from '../../store.ts';
+import { useSingleAlgorithm } from '../../hooks/use-single-algorithm.ts';
 import { Chart } from './Chart.tsx';
 
 export interface TransportChartProps {
@@ -9,7 +9,7 @@ export interface TransportChartProps {
 }
 
 export function TransportChart({ symbol }: TransportChartProps): ReactNode {
-  const algorithm = useStore(state => state.algorithm)!;
+  const algorithm = useSingleAlgorithm()!;
 
   const transportFeesData = [];
   const importTariffData = [];

@@ -1,17 +1,19 @@
 import { SegmentedControl } from '@mantine/core';
 import Highcharts from 'highcharts';
 import { ReactNode, useState } from 'react';
-import { ProsperitySymbol } from '../../models.ts';
-import { useStore } from '../../store.ts';
+import { useSingleAlgorithm } from '../../hooks/use-single-algorithm.ts';
+import { Algorithm, ProsperitySymbol } from '../../models.ts';
 import { getAskColor, getBidColor } from '../../utils/colors.ts';
 import { Chart } from './Chart.tsx';
 
 export interface OrdersChartProps {
   symbol: ProsperitySymbol;
+  algorithm?: Algorithm;
+  title?: string;
 }
 
-export function OrdersChart({ symbol }: OrdersChartProps): ReactNode {
-  const algorithm = useStore(state => state.algorithm)!;
+export function OrdersChart({ symbol, algorithm: providedAlgorithm, title }: OrdersChartProps): ReactNode {
+  const algorithm = providedAlgorithm ?? useSingleAlgorithm()!;
   const [priceMode, setPriceMode] = useState<'mid' | 'bidask'>('mid');
 
   const midPriceData: [number, number][] = [];
@@ -241,5 +243,5 @@ export function OrdersChart({ symbol }: OrdersChartProps): ReactNode {
     />
   );
 
-  return <Chart title={`${symbol} - Order Book`} series={series} controls={controls} />;
+  return <Chart title={title ?? `${symbol} - Order Book`} series={series} controls={controls} />;
 }

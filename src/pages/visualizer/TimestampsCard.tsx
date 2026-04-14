@@ -1,27 +1,26 @@
 import { Group, NumberInput, Slider, SliderProps, Text, Title } from '@mantine/core';
 import { useHotkeys } from '@mantine/hooks';
 import { KeyboardEvent, ReactNode, useEffect, useState } from 'react';
-import { AlgorithmDataRow } from '../../models.ts';
-import { useStore } from '../../store.ts';
+import { useSingleAlgorithm } from '../../hooks/use-single-algorithm.ts';
+import { Algorithm } from '../../models.ts';
 import { formatNumber } from '../../utils/format.ts';
 import { TimestampDetail } from './TimestampDetail.tsx';
+import { getRowsByTimestamp } from './utils.ts';
 import { VisualizerCard } from './VisualizerCard.tsx';
 
-export function TimestampsCard(): ReactNode {
-  const algorithm = useStore(state => state.algorithm)!;
+export interface TimestampsCardProps {
+  strategies?: { label: string; algorithm: Algorithm }[];
+}
 
-  const rowsByTimestamp: Record<number, AlgorithmDataRow> = {};
-  for (const row of algorithm.data) {
-    rowsByTimestamp[row.state.timestamp] = row;
-  }
+export function TimestampsCard({ strategies }: TimestampsCardProps): ReactNode {
+  const singleAlgorithm = useSingleAlgorithm();
+  const strategyEntries = strategies ?? [{ label: 'Strategy', algorithm: singleAlgorithm! }];
+  const rowsByTimestamp = strategyEntries.map(strategy => getRowsByTimestamp(strategy.algorithm));
+  const primaryAlgorithm = strategyEntries[0].algorithm;
 
-  const timestampMin = algorithm.data[0].state.timestamp;
-  const timestampMax = algorithm.data[algorithm.data.length - 1].state.timestamp;
-  const timestampStep = algorithm.data[1].state.timestamp - algorithm.data[0].state.timestamp;
-
-  // const timestampMin = 0;
-  // const timestampMax = 1999900;
-  // const timestampStep = 100;
+  const timestampMin = primaryAlgorithm.data[0].state.timestamp;
+  const timestampMax = primaryAlgorithm.data[primaryAlgorithm.data.length - 1].state.timestamp;
+  const timestampStep = primaryAlgorithm.data[1].state.timestamp - primaryAlgorithm.data[0].state.timestamp;
 
   const [timestamp, setTimestamp] = useState(timestampMin);
   const [inputValue, setInputValue] = useState<number | string>(timestampMin);
@@ -67,8 +66,6 @@ export function TimestampsCard(): ReactNode {
           value={inputValue}
           onChange={value => {
             setInputValue(value);
-            // Stepper buttons produce a valid snapped timestamp — commit immediately.
-            // Partial typed values (e.g. 273 when heading to 27300) won't match and are left pending.
             if (typeof value === 'number' && snapToNearest(value) === value) {
               setTimestamp(value);
             }
@@ -94,8 +91,23 @@ export function TimestampsCard(): ReactNode {
         mb="lg"
       />
 
-      {rowsByTimestamp[timestamp] ? (
-        <TimestampDetail row={rowsByTimestamp[timestamp]} />
+      {strategyEntries.length === 1 ? (
+        rowsByTimestamp[0][timestamp] ? (
+          <TimestampDetail mode="single" algorithm={strategyEntries[0].algorithm} row={rowsByTimestamp[0][timestamp]} />
+        ) : (
+          <Text>No logs found for timestamp {formatNumber(timestamp)}</Text>
+        )
+      ) : rowsByTimestamp.every(rows => rows[timestamp]) ? (
+        <TimestampDetail
+          mode="comparison"
+          timestamp={timestamp}
+          sharedRow={rowsByTimestamp[0][timestamp]}
+          strategies={strategyEntries.map((strategy, index) => ({
+            label: strategy.label,
+            algorithm: strategy.algorithm,
+            row: rowsByTimestamp[index][timestamp],
+          }))}
+        />
       ) : (
         <Text>No logs found for timestamp {formatNumber(timestamp)}</Text>
       )}

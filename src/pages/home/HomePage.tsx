@@ -2,6 +2,7 @@ import { Anchor, Code, Container, Stack, Text } from '@mantine/core';
 import { ReactNode } from 'react';
 import { ScrollableCodeHighlight } from '../../components/ScrollableCodeHighlight.tsx';
 import { HomeCard } from './HomeCard.tsx';
+import { LoadComparison } from './LoadComparison.tsx';
 import { LoadFromFile } from './LoadFromFile.tsx';
 import { LoadFromUrl } from './LoadFromUrl.tsx';
 
@@ -181,6 +182,7 @@ class Trader:
 
         <LoadFromFile />
         <LoadFromUrl />
+        <LoadComparison />
       </Stack>
     </Container>
   );

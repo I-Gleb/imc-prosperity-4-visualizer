@@ -1,7 +1,7 @@
 import Highcharts from 'highcharts';
 import { ReactNode } from 'react';
 import { ProsperitySymbol } from '../../models.ts';
-import { useStore } from '../../store.ts';
+import { useSingleAlgorithm } from '../../hooks/use-single-algorithm.ts';
 import { getAskColor, getBidColor } from '../../utils/colors.ts';
 import { Chart } from './Chart.tsx';
 
@@ -10,7 +10,7 @@ export interface ConversionPriceChartProps {
 }
 
 export function ConversionPriceChart({ symbol }: ConversionPriceChartProps): ReactNode {
-  const algorithm = useStore(state => state.algorithm)!;
+  const algorithm = useSingleAlgorithm()!;
 
   const bidPriceData = [];
   const askPriceData = [];

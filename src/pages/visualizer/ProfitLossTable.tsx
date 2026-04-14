@@ -1,16 +1,18 @@
 import { Table } from '@mantine/core';
 import { ReactNode } from 'react';
-import { useStore } from '../../store.ts';
+import { useSingleAlgorithm } from '../../hooks/use-single-algorithm.ts';
+import { Algorithm } from '../../models.ts';
 import { getAskColor, getBidColor } from '../../utils/colors.ts';
 import { formatNumber } from '../../utils/format.ts';
 import { SimpleTable } from './SimpleTable.tsx';
 
 export interface ProfitLossTableProps {
   timestamp: number;
+  algorithm?: Algorithm;
 }
 
-export function ProfitLossTable({ timestamp }: ProfitLossTableProps): ReactNode {
-  const algorithm = useStore(state => state.algorithm)!;
+export function ProfitLossTable({ timestamp, algorithm: providedAlgorithm }: ProfitLossTableProps): ReactNode {
+  const algorithm = providedAlgorithm ?? useSingleAlgorithm()!;
 
   const rows: ReactNode[] = algorithm.activityLogs
     .filter(row => row.timestamp === timestamp)

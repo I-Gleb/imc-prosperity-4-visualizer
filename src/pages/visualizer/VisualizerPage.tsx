@@ -14,46 +14,26 @@ import { ProfitLossChart } from './ProfitLossChart.tsx';
 import { TimestampsCard } from './TimestampsCard.tsx';
 import { TransportChart } from './TransportChart.tsx';
 import { VisualizerCard } from './VisualizerCard.tsx';
+import {
+  getConversionProducts,
+  getFinalProfitLoss,
+  getSortedPlainValueObservationSymbols,
+  getSortedSymbols,
+} from './utils.ts';
 
 export function VisualizerPage(): ReactNode {
-  const algorithm = useStore(state => state.algorithm);
+  const visualizer = useStore(state => state.visualizer);
 
   const { search } = useLocation();
 
-  if (algorithm === null) {
+  if (visualizer?.mode !== 'single') {
     return <Navigate to={`/${search}`} />;
   }
-
-  const conversionProducts = new Set();
-  for (const row of algorithm.data) {
-    for (const product of Object.keys(row.state.observations.conversionObservations)) {
-      conversionProducts.add(product);
-    }
-  }
-
-  let profitLoss = 0;
-  const lastTimestamp = algorithm.activityLogs[algorithm.activityLogs.length - 1].timestamp;
-  for (let i = algorithm.activityLogs.length - 1; i >= 0 && algorithm.activityLogs[i].timestamp == lastTimestamp; i--) {
-    profitLoss += algorithm.activityLogs[i].profitLoss;
-  }
-
-  const symbols = new Set<string>();
-  const plainValueObservationSymbols = new Set<string>();
-
-  for (let i = 0; i < algorithm.data.length; i += 1000) {
-    const row = algorithm.data[i];
-
-    for (const key of Object.keys(row.state.listings)) {
-      symbols.add(key);
-    }
-
-    for (const key of Object.keys(row.state.observations.plainValueObservations)) {
-      plainValueObservationSymbols.add(key);
-    }
-  }
-
-  const sortedSymbols = [...symbols].sort((a, b) => a.localeCompare(b));
-  const sortedPlainValueObservationSymbols = [...plainValueObservationSymbols].sort((a, b) => a.localeCompare(b));
+  const algorithm = visualizer.algorithm;
+  const conversionProducts = getConversionProducts(algorithm);
+  const profitLoss = getFinalProfitLoss(algorithm);
+  const sortedSymbols = getSortedSymbols(algorithm);
+  const sortedPlainValueObservationSymbols = getSortedPlainValueObservationSymbols(algorithm);
 
   const symbolColumns: ReactNode[] = [];
   sortedSymbols.forEach(symbol => {

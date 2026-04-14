@@ -7,7 +7,7 @@ import classes from './Header.module.css';
 
 export function Header(): ReactNode {
   const location = useLocation();
-  const algorithm = useStore(state => state.algorithm);
+  const visualizer = useStore(state => state.visualizer);
 
   const links = [
     <Link
@@ -23,7 +23,7 @@ export function Header(): ReactNode {
     </Link>,
   ];
 
-  if (algorithm !== null) {
+  if (visualizer?.mode === 'single') {
     links.push(
       <Link
         key="visualizer"
@@ -45,6 +45,33 @@ export function Header(): ReactNode {
             <IconEye size={18} />
           </Box>
           <Box visibleFrom="xs">Visualizer</Box>
+        </a>
+      </Tooltip>,
+    );
+  }
+
+  if (visualizer?.mode === 'comparison') {
+    links.push(
+      <Link
+        key="compare"
+        to={`/compare${location.search}`}
+        className={classes.link}
+        data-active={location.pathname === '/compare' || undefined}
+      >
+        <Box hiddenFrom="xs">
+          <IconEye size={18} />
+        </Box>
+        <Box visibleFrom="xs">Compare</Box>
+      </Link>,
+    );
+  } else {
+    links.push(
+      <Tooltip key="compare" label="Load two algorithms first">
+        <a className={`${classes.link} ${classes.linkDisabled}`}>
+          <Box hiddenFrom="xs">
+            <IconEye size={18} />
+          </Box>
+          <Box visibleFrom="xs">Compare</Box>
         </a>
       </Tooltip>,
     );

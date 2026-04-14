@@ -1,13 +1,14 @@
 import { Group, SegmentedControl, Select } from '@mantine/core';
 import Highcharts from 'highcharts';
 import { ReactNode, useState } from 'react';
-import { ProsperitySymbol } from '../../models.ts';
-import { useStore } from '../../store.ts';
+import { useSingleAlgorithm } from '../../hooks/use-single-algorithm.ts';
+import { Algorithm, ProsperitySymbol } from '../../models.ts';
 import { getAskColor, getBidColor } from '../../utils/colors.ts';
 import { Chart } from './Chart.tsx';
 
 export interface CandlestickChartProps {
   symbol: ProsperitySymbol;
+  algorithm?: Algorithm;
 }
 
 const GROUP_SIZE_OPTIONS = [
@@ -26,8 +27,8 @@ function defaultGroupSize(timestampCount: number): string {
 
 type ViewMode = 'movement' | 'price' | 'volume';
 
-export function CandlestickChart({ symbol }: CandlestickChartProps): ReactNode {
-  const algorithm = useStore(state => state.algorithm)!;
+export function CandlestickChart({ symbol, algorithm: providedAlgorithm }: CandlestickChartProps): ReactNode {
+  const algorithm = providedAlgorithm ?? useSingleAlgorithm()!;
   const [viewMode, setViewMode] = useState<ViewMode>('movement');
 
   const rows = algorithm.activityLogs.filter(row => row.product === symbol);
