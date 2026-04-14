@@ -1,4 +1,4 @@
-import { Center, Container, Grid, Title } from '@mantine/core';
+import { Center, Container, Grid, Text, Title } from '@mantine/core';
 import { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { ErrorAlert } from '../../components/ErrorAlert.tsx';
@@ -22,6 +22,10 @@ export function ComparisonPage(): ReactNode {
 
   const { left, right } = visualizer;
   const labels = visualizer.labels ?? { left: 'Strategy A', right: 'Strategy B' };
+  const aliases = { left: 'Strategy A', right: 'Strategy B' };
+  const leftProfitLoss = getFinalProfitLoss(left);
+  const rightProfitLoss = getFinalProfitLoss(right);
+  const profitLossDelta = leftProfitLoss - rightProfitLoss;
 
   try {
     assertAlgorithmsComparable(left, right);
@@ -46,14 +50,14 @@ export function ComparisonPage(): ReactNode {
     );
 
     symbolColumns.push(
-      <Grid.Col key={`${symbol} - ${labels.left}`} span={{ xs: 12, sm: 6 }}>
-        <OrdersChart symbol={symbol} algorithm={left} title={`${labels.left} - ${symbol} Order Book`} />
+      <Grid.Col key={`${symbol} - ${aliases.left}`} span={{ xs: 12, sm: 6 }}>
+        <OrdersChart symbol={symbol} algorithm={left} title={`${symbol} - ${aliases.left}`} />
       </Grid.Col>,
     );
 
     symbolColumns.push(
-      <Grid.Col key={`${symbol} - ${labels.right}`} span={{ xs: 12, sm: 6 }}>
-        <OrdersChart symbol={symbol} algorithm={right} title={`${labels.right} - ${symbol} Order Book`} />
+      <Grid.Col key={`${symbol} - ${aliases.right}`} span={{ xs: 12, sm: 6 }}>
+        <OrdersChart symbol={symbol} algorithm={right} title={`${symbol} - ${aliases.right}`} />
       </Grid.Col>,
     );
   });
@@ -62,21 +66,67 @@ export function ComparisonPage(): ReactNode {
     <Container fluid>
       <Grid>
         <Grid.Col span={12}>
-          <VisualizerCard>
-            <Center>
-              <Title order={2}>
-                Final Profit / Loss: {labels.left} {formatNumber(getFinalProfitLoss(left))} • {labels.right}{' '}
-                {formatNumber(getFinalProfitLoss(right))}
-              </Title>
-            </Center>
+          <VisualizerCard title="Compared Strategies">
+            <Grid>
+              <Grid.Col span={{ xs: 12, sm: 6 }}>
+                <Title order={4}>{aliases.left}</Title>
+                <Text c="dimmed" lineClamp={1}>
+                  {labels.left}
+                </Text>
+              </Grid.Col>
+              <Grid.Col span={{ xs: 12, sm: 6 }}>
+                <Title order={4}>{aliases.right}</Title>
+                <Text c="dimmed" lineClamp={1}>
+                  {labels.right}
+                </Text>
+              </Grid.Col>
+            </Grid>
+          </VisualizerCard>
+        </Grid.Col>
+        <Grid.Col span={12}>
+          <VisualizerCard title="Final Profit / Loss">
+            <Grid align="center">
+              <Grid.Col span={{ xs: 12, sm: 5 }}>
+                <Center>
+                  <div>
+                    <Title order={3}>{aliases.left}</Title>
+                    <Text size="xl" fw={700}>
+                      {formatNumber(leftProfitLoss)}
+                    </Text>
+                  </div>
+                </Center>
+              </Grid.Col>
+              <Grid.Col span={{ xs: 12, sm: 2 }}>
+                <Center>
+                  <div>
+                    <Text c="dimmed" ta="center">
+                      Difference
+                    </Text>
+                    <Title order={3} ta="center">
+                      {formatNumber(profitLossDelta)}
+                    </Title>
+                  </div>
+                </Center>
+              </Grid.Col>
+              <Grid.Col span={{ xs: 12, sm: 5 }}>
+                <Center>
+                  <div>
+                    <Title order={3}>{aliases.right}</Title>
+                    <Text size="xl" fw={700}>
+                      {formatNumber(rightProfitLoss)}
+                    </Text>
+                  </div>
+                </Center>
+              </Grid.Col>
+            </Grid>
           </VisualizerCard>
         </Grid.Col>
         <Grid.Col span={{ xs: 12, sm: 6 }}>
           <ProfitLossChart
             symbols={symbols}
             algorithms={[
-              { label: labels.left, algorithm: left },
-              { label: labels.right, algorithm: right },
+              { label: aliases.left, algorithm: left },
+              { label: aliases.right, algorithm: right },
             ]}
           />
         </Grid.Col>
@@ -84,8 +134,8 @@ export function ComparisonPage(): ReactNode {
           <PositionChart
             symbols={symbols}
             algorithms={[
-              { label: labels.left, algorithm: left },
-              { label: labels.right, algorithm: right },
+              { label: aliases.left, algorithm: left },
+              { label: aliases.right, algorithm: right },
             ]}
           />
         </Grid.Col>
@@ -93,8 +143,8 @@ export function ComparisonPage(): ReactNode {
         <Grid.Col span={12}>
           <TimestampsCard
             strategies={[
-              { label: labels.left, algorithm: left },
-              { label: labels.right, algorithm: right },
+              { label: aliases.left, algorithm: left },
+              { label: aliases.right, algorithm: right },
             ]}
           />
         </Grid.Col>

@@ -1,4 +1,4 @@
-import { Grid, Text, Title } from '@mantine/core';
+import { Grid, Paper, Stack, Text, Title } from '@mantine/core';
 import { ReactNode } from 'react';
 import { ScrollableCodeHighlight } from '../../components/ScrollableCodeHighlight.tsx';
 import { Algorithm, AlgorithmDataRow } from '../../models.ts';
@@ -43,22 +43,82 @@ interface ComparisonTimestampDetailProps {
 
 export type TimestampDetailProps = SingleTimestampDetailProps | ComparisonTimestampDetailProps;
 
-function StrategySection({
-  label,
-  title,
-  children,
-}: {
-  label: string;
-  title: string;
-  children: ReactNode;
-}): ReactNode {
+function ComparisonSection({ title, children }: { title: string; children: ReactNode }): ReactNode {
   return (
-    <Grid.Col span={{ xs: 12, sm: 6 }}>
-      <Title order={5}>
-        {label} {title}
+    <div>
+      <Title order={5} mb="xs">
+        {title}
       </Title>
       {children}
-    </Grid.Col>
+    </div>
+  );
+}
+
+function StrategyColumn({
+  label,
+  profitLoss,
+  row,
+  algorithm,
+}: {
+  label: string;
+  profitLoss: number;
+  row: AlgorithmDataRow;
+  algorithm: Algorithm;
+}): ReactNode {
+  return (
+    <Paper withBorder p="md" h="100%">
+      <Stack gap="md">
+        <div>
+          <Title order={4}>{label}</Title>
+          <Text c="dimmed">
+            Profit / Loss: {formatNumber(profitLoss)} • Conversions: {formatNumber(row.conversions)}
+          </Text>
+        </div>
+        <ComparisonSection title="Positions">
+          <PositionTable position={row.state.position} />
+        </ComparisonSection>
+        <ComparisonSection title="Profit / Loss">
+          <ProfitLossTable timestamp={row.state.timestamp} algorithm={algorithm} />
+        </ComparisonSection>
+        <ComparisonSection title="Most Recent Own trades">
+          <TradesTable trades={row.state.ownTrades} />
+        </ComparisonSection>
+        <ComparisonSection title="Most Recent Market trades">
+          <TradesTable trades={row.state.marketTrades} />
+        </ComparisonSection>
+        <ComparisonSection title="Orders">
+          <OrdersTable orders={row.orders} />
+        </ComparisonSection>
+        <ComparisonSection title="Previous trader data">
+          {row.state.traderData ? (
+            <ScrollableCodeHighlight code={formatTraderData(row.state.traderData)} language="json" />
+          ) : (
+            <Text>Timestamp has no previous trader data</Text>
+          )}
+        </ComparisonSection>
+        <ComparisonSection title="Next trader data">
+          {row.traderData ? (
+            <ScrollableCodeHighlight code={formatTraderData(row.traderData)} language="json" />
+          ) : (
+            <Text>Timestamp has no next trader data</Text>
+          )}
+        </ComparisonSection>
+        <ComparisonSection title="Sandbox logs">
+          {row.sandboxLogs ? (
+            <ScrollableCodeHighlight code={row.sandboxLogs} language="markdown" />
+          ) : (
+            <Text>Timestamp has no sandbox logs</Text>
+          )}
+        </ComparisonSection>
+        <ComparisonSection title="Algorithm logs">
+          {row.algorithmLogs ? (
+            <ScrollableCodeHighlight code={row.algorithmLogs} language="markdown" />
+          ) : (
+            <Text>Timestamp has no algorithm logs</Text>
+          )}
+        </ComparisonSection>
+      </Stack>
+    </Paper>
   );
 }
 
@@ -174,6 +234,9 @@ export function TimestampDetail(props: TimestampDetailProps): ReactNode {
       <Grid.Col span={12}>
         <Title order={5}>Timestamp {formatNumber(timestamp)}</Title>
       </Grid.Col>
+      <Grid.Col span={12}>
+        <Title order={4}>Shared Market Data</Title>
+      </Grid.Col>
       {Object.entries(sharedRow.state.orderDepths).map(([symbol, orderDepth], i) => (
         <Grid.Col key={i} span={{ xs: 12, sm: 4 }}>
           <Title order={5}>{symbol} order depth</Title>
@@ -190,98 +253,15 @@ export function TimestampDetail(props: TimestampDetailProps): ReactNode {
         <Title order={5}>Conversion observations</Title>
         <ConversionObservationsTable conversionObservations={sharedRow.state.observations.conversionObservations} />
       </Grid.Col>
-      <StrategySection
-        label={left.label}
-        title={`• Profit / Loss: ${formatNumber(leftProfitLoss)} • Conversions: ${formatNumber(left.row.conversions)}`}
-      >
-        <PositionTable position={left.row.state.position} />
-      </StrategySection>
-      <StrategySection
-        label={right.label}
-        title={`• Profit / Loss: ${formatNumber(rightProfitLoss)} • Conversions: ${formatNumber(right.row.conversions)}`}
-      >
-        <PositionTable position={right.row.state.position} />
-      </StrategySection>
-      <StrategySection label={left.label} title="Profit / Loss">
-        <ProfitLossTable timestamp={left.row.state.timestamp} algorithm={left.algorithm} />
-      </StrategySection>
-      <StrategySection label={right.label} title="Profit / Loss">
-        <ProfitLossTable timestamp={right.row.state.timestamp} algorithm={right.algorithm} />
-      </StrategySection>
-      <StrategySection label={left.label} title="Most Recent Own trades">
-        <TradesTable trades={left.row.state.ownTrades} />
-      </StrategySection>
-      <StrategySection label={right.label} title="Most Recent Own trades">
-        <TradesTable trades={right.row.state.ownTrades} />
-      </StrategySection>
-      <StrategySection label={left.label} title="Most Recent Market trades">
-        <TradesTable trades={left.row.state.marketTrades} />
-      </StrategySection>
-      <StrategySection label={right.label} title="Most Recent Market trades">
-        <TradesTable trades={right.row.state.marketTrades} />
-      </StrategySection>
-      <StrategySection label={left.label} title="Orders">
-        <OrdersTable orders={left.row.orders} />
-      </StrategySection>
-      <StrategySection label={right.label} title="Orders">
-        <OrdersTable orders={right.row.orders} />
-      </StrategySection>
-      <StrategySection label={left.label} title="Previous trader data">
-        {left.row.state.traderData ? (
-          <ScrollableCodeHighlight code={formatTraderData(left.row.state.traderData)} language="json" />
-        ) : (
-          <Text>Timestamp has no previous trader data</Text>
-        )}
-      </StrategySection>
-      <StrategySection label={right.label} title="Previous trader data">
-        {right.row.state.traderData ? (
-          <ScrollableCodeHighlight code={formatTraderData(right.row.state.traderData)} language="json" />
-        ) : (
-          <Text>Timestamp has no previous trader data</Text>
-        )}
-      </StrategySection>
-      <StrategySection label={left.label} title="Next trader data">
-        {left.row.traderData ? (
-          <ScrollableCodeHighlight code={formatTraderData(left.row.traderData)} language="json" />
-        ) : (
-          <Text>Timestamp has no next trader data</Text>
-        )}
-      </StrategySection>
-      <StrategySection label={right.label} title="Next trader data">
-        {right.row.traderData ? (
-          <ScrollableCodeHighlight code={formatTraderData(right.row.traderData)} language="json" />
-        ) : (
-          <Text>Timestamp has no next trader data</Text>
-        )}
-      </StrategySection>
-      <StrategySection label={left.label} title="Sandbox logs">
-        {left.row.sandboxLogs ? (
-          <ScrollableCodeHighlight code={left.row.sandboxLogs} language="markdown" />
-        ) : (
-          <Text>Timestamp has no sandbox logs</Text>
-        )}
-      </StrategySection>
-      <StrategySection label={right.label} title="Sandbox logs">
-        {right.row.sandboxLogs ? (
-          <ScrollableCodeHighlight code={right.row.sandboxLogs} language="markdown" />
-        ) : (
-          <Text>Timestamp has no sandbox logs</Text>
-        )}
-      </StrategySection>
-      <StrategySection label={left.label} title="Algorithm logs">
-        {left.row.algorithmLogs ? (
-          <ScrollableCodeHighlight code={left.row.algorithmLogs} language="markdown" />
-        ) : (
-          <Text>Timestamp has no algorithm logs</Text>
-        )}
-      </StrategySection>
-      <StrategySection label={right.label} title="Algorithm logs">
-        {right.row.algorithmLogs ? (
-          <ScrollableCodeHighlight code={right.row.algorithmLogs} language="markdown" />
-        ) : (
-          <Text>Timestamp has no algorithm logs</Text>
-        )}
-      </StrategySection>
+      <Grid.Col span={12}>
+        <Title order={4}>Strategy Snapshots</Title>
+      </Grid.Col>
+      <Grid.Col span={{ xs: 12, sm: 6 }}>
+        <StrategyColumn label={left.label} profitLoss={leftProfitLoss} row={left.row} algorithm={left.algorithm} />
+      </Grid.Col>
+      <Grid.Col span={{ xs: 12, sm: 6 }}>
+        <StrategyColumn label={right.label} profitLoss={rightProfitLoss} row={right.row} algorithm={right.algorithm} />
+      </Grid.Col>
     </Grid>
   );
 }
