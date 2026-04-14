@@ -5,6 +5,7 @@ import { FormEvent, ReactNode, useCallback, useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ErrorAlert } from '../../components/ErrorAlert.tsx';
 import { useAsync } from '../../hooks/use-async.ts';
+import { assertAlgorithmsComparable } from '../visualizer/utils.ts';
 import { useStore } from '../../store.ts';
 import { getAlgorithmLabelFromUrl, loadAlgorithmFromFile, loadAlgorithmFromUrl } from '../../utils/loaders.ts';
 import { HomeCard } from './HomeCard.tsx';
@@ -65,12 +66,14 @@ export function LoadComparison(): ReactNode {
     }
 
     const [left, right] = await Promise.all([loadAlgorithmFromFile(leftFile), loadAlgorithmFromFile(rightFile)]);
+    assertAlgorithmsComparable(left, right);
     setComparison(left, right, { left: leftFile.name, right: rightFile.name });
     navigate('/compare');
   });
 
   const loadComparisonUrls = useAsync(async (nextLeftUrl: string, nextRightUrl: string): Promise<void> => {
     const [left, right] = await Promise.all([loadAlgorithmFromUrl(nextLeftUrl), loadAlgorithmFromUrl(nextRightUrl)]);
+    assertAlgorithmsComparable(left, right);
     setComparison(left, right, {
       left: getAlgorithmLabelFromUrl(nextLeftUrl),
       right: getAlgorithmLabelFromUrl(nextRightUrl),

@@ -1,6 +1,7 @@
 import { Alert, AlertProps, Code, List, Text } from '@mantine/core';
 import { IconAlertCircle } from '@tabler/icons-react';
 import { ReactNode } from 'react';
+import { ComparisonDataError } from '../pages/visualizer/utils.ts';
 import { AlgorithmParseError } from '../utils/algorithm.tsx';
 
 export interface ErrorAlertProps extends Partial<AlertProps> {
@@ -34,6 +35,13 @@ export function ErrorAlert({ error, ...alertProps }: ErrorAlertProps): ReactNode
         </>
       )}
       {error instanceof AlgorithmParseError ? error.node : error.message}
+      {error instanceof ComparisonDataError && error.details.length > 0 && (
+        <List mt="sm">
+          {error.details.map((detail, index) => (
+            <List.Item key={index}>{detail}</List.Item>
+          ))}
+        </List>
+      )}
     </Alert>
   );
 }

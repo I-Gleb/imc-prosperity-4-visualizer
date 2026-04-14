@@ -1,6 +1,13 @@
 import { Algorithm, AlgorithmDataRow } from '../../models.ts';
 
-export class ComparisonDataError extends Error {}
+export class ComparisonDataError extends Error {
+  public constructor(
+    message: string,
+    public readonly details: string[] = [],
+  ) {
+    super(message);
+  }
+}
 
 export function getConversionProducts(algorithm: Algorithm): Set<string> {
   const conversionProducts = new Set<string>();
@@ -67,26 +74,54 @@ function stringify(value: unknown): string {
   return JSON.stringify(value);
 }
 
+function compareValues(
+  leftValue: unknown,
+  rightValue: unknown,
+  message: string,
+  details: string[],
+): void {
+  if (stringify(leftValue) !== stringify(rightValue)) {
+    throw new ComparisonDataError(message, details);
+  }
+}
+
 export function assertAlgorithmsComparable(left: Algorithm, right: Algorithm): void {
   if (left.activityLogs.length !== right.activityLogs.length || left.data.length !== right.data.length) {
-    throw new ComparisonDataError('The selected logs do not cover the same market data.');
+    throw new ComparisonDataError('The selected logs do not cover the same market data.', [
+      `Activity log rows: ${left.activityLogs.length} vs ${right.activityLogs.length}`,
+      `State snapshots: ${left.data.length} vs ${right.data.length}`,
+    ]);
   }
 
   for (let i = 0; i < left.activityLogs.length; i++) {
     const leftRow = left.activityLogs[i];
     const rightRow = right.activityLogs[i];
 
-    if (
-      leftRow.timestamp !== rightRow.timestamp ||
-      leftRow.product !== rightRow.product ||
-      leftRow.midPrice !== rightRow.midPrice ||
-      stringify(leftRow.bidPrices) !== stringify(rightRow.bidPrices) ||
-      stringify(leftRow.bidVolumes) !== stringify(rightRow.bidVolumes) ||
-      stringify(leftRow.askPrices) !== stringify(rightRow.askPrices) ||
-      stringify(leftRow.askVolumes) !== stringify(rightRow.askVolumes)
-    ) {
-      throw new ComparisonDataError('The selected logs do not share the same price movement history.');
+    if (leftRow.timestamp !== rightRow.timestamp || leftRow.product !== rightRow.product) {
+      throw new ComparisonDataError('The selected logs do not align on the same market timeline.', [
+        `Activity row ${i + 1} differs.`,
+        `Left: timestamp ${leftRow.timestamp}, product ${leftRow.product}`,
+        `Right: timestamp ${rightRow.timestamp}, product ${rightRow.product}`,
+      ]);
     }
+
+    compareValues(leftRow.midPrice, rightRow.midPrice, 'The selected logs have different mid-price history.', [
+      `Timestamp ${leftRow.timestamp}, product ${leftRow.product}`,
+      `Left mid price: ${leftRow.midPrice}`,
+      `Right mid price: ${rightRow.midPrice}`,
+    ]);
+    compareValues(leftRow.bidPrices, rightRow.bidPrices, 'The selected logs have different bid-price history.', [
+      `Timestamp ${leftRow.timestamp}, product ${leftRow.product}`,
+    ]);
+    compareValues(leftRow.bidVolumes, rightRow.bidVolumes, 'The selected logs have different bid-volume history.', [
+      `Timestamp ${leftRow.timestamp}, product ${leftRow.product}`,
+    ]);
+    compareValues(leftRow.askPrices, rightRow.askPrices, 'The selected logs have different ask-price history.', [
+      `Timestamp ${leftRow.timestamp}, product ${leftRow.product}`,
+    ]);
+    compareValues(leftRow.askVolumes, rightRow.askVolumes, 'The selected logs have different ask-volume history.', [
+      `Timestamp ${leftRow.timestamp}, product ${leftRow.product}`,
+    ]);
   }
 
   for (let i = 0; i < left.data.length; i++) {
@@ -94,15 +129,25 @@ export function assertAlgorithmsComparable(left: Algorithm, right: Algorithm): v
     const rightRow = right.data[i];
 
     if (leftRow.state.timestamp !== rightRow.state.timestamp) {
-      throw new ComparisonDataError('The selected logs do not use the same timestamps.');
+      throw new ComparisonDataError('The selected logs do not use the same state timestamps.', [
+        `State row ${i + 1}: ${leftRow.state.timestamp} vs ${rightRow.state.timestamp}`,
+      ]);
     }
 
-    if (
-      stringify(leftRow.state.listings) !== stringify(rightRow.state.listings) ||
-      stringify(leftRow.state.orderDepths) !== stringify(rightRow.state.orderDepths) ||
-      stringify(leftRow.state.observations) !== stringify(rightRow.state.observations)
-    ) {
-      throw new ComparisonDataError('The selected logs do not share the same market-state snapshots.');
-    }
+    compareValues(leftRow.state.listings, rightRow.state.listings, 'The selected logs have different listings.', [
+      `Timestamp ${leftRow.state.timestamp}`,
+    ]);
+    compareValues(
+      leftRow.state.orderDepths,
+      rightRow.state.orderDepths,
+      'The selected logs have different order-depth snapshots.',
+      [`Timestamp ${leftRow.state.timestamp}`],
+    );
+    compareValues(
+      leftRow.state.observations,
+      rightRow.state.observations,
+      'The selected logs have different observation snapshots.',
+      [`Timestamp ${leftRow.state.timestamp}`],
+    );
   }
 }
