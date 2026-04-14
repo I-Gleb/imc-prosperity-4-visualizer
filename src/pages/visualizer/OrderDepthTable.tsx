@@ -7,9 +7,10 @@ import { OrderDepthTableSpreadRow } from './OrderDepthTableSpreadRow.tsx';
 
 export interface OrderDepthTableProps {
   orderDepth: OrderDepth;
+  midPrice?: number;
 }
 
-export function OrderDepthTable({ orderDepth }: OrderDepthTableProps): ReactNode {
+export function OrderDepthTable({ orderDepth, midPrice }: OrderDepthTableProps): ReactNode {
   const rows: ReactNode[] = [];
 
   const askPrices = Object.keys(orderDepth.sellOrders)
@@ -39,6 +40,16 @@ export function OrderDepthTable({ orderDepth }: OrderDepthTableProps): ReactNode
 
   if (askPrices.length > 0 && bidPrices.length > 0 && askPrices[askPrices.length - 1] !== bidPrices[0]) {
     rows.push(<OrderDepthTableSpreadRow key="spread" spread={askPrices[askPrices.length - 1] - bidPrices[0]} />);
+  }
+
+  if (midPrice !== undefined) {
+    rows.push(
+      <Table.Tr key="mid-price">
+        <Table.Td></Table.Td>
+        <Table.Td style={{ textAlign: 'center', fontWeight: 700 }}>Mid: {formatNumber(midPrice)}</Table.Td>
+        <Table.Td></Table.Td>
+      </Table.Tr>,
+    );
   }
 
   for (let i = 0; i < bidPrices.length; i++) {

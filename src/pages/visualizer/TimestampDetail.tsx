@@ -20,6 +20,10 @@ function formatTraderData(value: any): string {
   return JSON.stringify(value);
 }
 
+function getMidPrice(algorithm: Algorithm, timestamp: number, symbol: string): number | undefined {
+  return algorithm.activityLogs.find(row => row.timestamp === timestamp && row.product === symbol)?.midPrice;
+}
+
 interface SingleTimestampDetailProps {
   mode: 'single';
   algorithm: Algorithm;
@@ -97,7 +101,7 @@ export function TimestampDetail(props: TimestampDetailProps): ReactNode {
         {Object.entries(state.orderDepths).map(([symbol, orderDepth], i) => (
           <Grid.Col key={i} span={{ xs: 12, sm: 4 }}>
             <Title order={5}>{symbol} order depth</Title>
-            <OrderDepthTable orderDepth={orderDepth} />
+            <OrderDepthTable orderDepth={orderDepth} midPrice={getMidPrice(algorithm, state.timestamp, symbol)} />
           </Grid.Col>
         ))}
         {Object.keys(state.orderDepths).length % 3 <= 2 && <Grid.Col span={{ xs: 12, sm: 4 }} />}
@@ -173,7 +177,7 @@ export function TimestampDetail(props: TimestampDetailProps): ReactNode {
       {Object.entries(sharedRow.state.orderDepths).map(([symbol, orderDepth], i) => (
         <Grid.Col key={i} span={{ xs: 12, sm: 4 }}>
           <Title order={5}>{symbol} order depth</Title>
-          <OrderDepthTable orderDepth={orderDepth} />
+          <OrderDepthTable orderDepth={orderDepth} midPrice={getMidPrice(left.algorithm, timestamp, symbol)} />
         </Grid.Col>
       ))}
       {Object.keys(sharedRow.state.orderDepths).length % 3 <= 2 && <Grid.Col span={{ xs: 12, sm: 4 }} />}
