@@ -6,11 +6,6 @@ This repository contains the source code for a visualizer built for the **IMC Pr
 
 It is forked from the original IMC Prosperity 3 visualizer (https://jmerle.github.io/imc-prosperity-3-visualizer/) and has been adapted and extended to support the requirements and data formats of Prosperity 4.
 
-## 🔗 Live Demo
-
-The deployed visualizer is available at:  
-https://kevin-fu1.github.io/imc-prosperity-4-visualizer/
-
 ## 📌 Background
 
 This project is based on the IMC Prosperity 3 visualizer:  
