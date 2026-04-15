@@ -12,6 +12,10 @@ export interface OrdersChartProps {
   title?: string;
 }
 
+function hasVisiblePriceData(row: Algorithm['activityLogs'][number]): boolean {
+  return row.midPrice !== 0 || row.bidPrices.length > 0 || row.askPrices.length > 0;
+}
+
 export function OrdersChart({ symbol, algorithm: providedAlgorithm, title }: OrdersChartProps): ReactNode {
   const algorithm = providedAlgorithm ?? useSingleAlgorithm()!;
   const [priceMode, setPriceMode] = useState<'mid' | 'bidask'>('mid');
@@ -26,6 +30,7 @@ export function OrdersChart({ symbol, algorithm: providedAlgorithm, title }: Ord
 
   for (const row of algorithm.activityLogs) {
     if (row.product !== symbol) continue;
+    if (!hasVisiblePriceData(row)) continue;
 
     midPriceData.push([row.timestamp, row.midPrice]);
 

@@ -18,6 +18,10 @@ const GROUP_SIZE_OPTIONS = [
   { value: '25', label: '25 ticks' },
   { value: '50', label: '50 ticks' },
   { value: '100', label: '100 ticks' },
+  { value: '250', label: '250 ticks' },
+  { value: '500', label: '500 ticks' },
+  { value: '1000', label: '1000 ticks' },
+  { value: '2500', label: '2500 ticks' },
 ];
 
 function defaultGroupSize(timestampCount: number): string {
@@ -27,11 +31,15 @@ function defaultGroupSize(timestampCount: number): string {
 
 type ViewMode = 'movement' | 'price' | 'volume';
 
+function hasVisiblePriceData(row: Algorithm['activityLogs'][number]): boolean {
+  return row.midPrice !== 0 || row.bidPrices.length > 0 || row.askPrices.length > 0;
+}
+
 export function CandlestickChart({ symbol, algorithm: providedAlgorithm }: CandlestickChartProps): ReactNode {
   const algorithm = providedAlgorithm ?? useSingleAlgorithm()!;
   const [viewMode, setViewMode] = useState<ViewMode>('movement');
 
-  const rows = algorithm.activityLogs.filter(row => row.product === symbol);
+  const rows = algorithm.activityLogs.filter(row => row.product === symbol && hasVisiblePriceData(row));
   const [groupSize, setGroupSize] = useState(() => defaultGroupSize(rows.length));
   const size = parseInt(groupSize);
 
