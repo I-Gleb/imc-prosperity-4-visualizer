@@ -174,12 +174,14 @@ export function TimestampDetail(props: TimestampDetailProps): ReactNode {
         <Grid.Col span={12}>
           <Title order={4}>Market Snapshot</Title>
         </Grid.Col>
-        {Object.entries(state.orderDepths).map(([symbol, orderDepth], i) => (
-          <Grid.Col key={i} span={{ xs: 12, sm: 4 }}>
-            <Title order={5}>{symbol} order depth</Title>
-            <OrderDepthTable orderDepth={orderDepth} midPrice={getMidPrice(algorithm, state.timestamp, symbol)} />
-          </Grid.Col>
-        ))}
+        {Object.entries(state.orderDepths)
+          .sort(([leftSymbol], [rightSymbol]) => leftSymbol.localeCompare(rightSymbol))
+          .map(([symbol, orderDepth]) => (
+            <Grid.Col key={symbol} span={{ xs: 12, sm: 4 }}>
+              <Title order={5}>{symbol} order depth</Title>
+              <OrderDepthTable orderDepth={orderDepth} midPrice={getMidPrice(algorithm, state.timestamp, symbol)} />
+            </Grid.Col>
+          ))}
         {Object.keys(state.orderDepths).length % 3 <= 2 && <Grid.Col span={{ xs: 12, sm: 4 }} />}
         {Object.keys(state.orderDepths).length % 3 <= 1 && <Grid.Col span={{ xs: 12, sm: 4 }} />}
         <Grid.Col span={{ xs: 12, sm: 4 }}>
@@ -248,12 +250,14 @@ export function TimestampDetail(props: TimestampDetailProps): ReactNode {
       <Grid.Col span={12}>
         <Title order={4}>Shared Market Data</Title>
       </Grid.Col>
-      {Object.entries(sharedRow.state.orderDepths).map(([symbol, orderDepth], i) => (
-        <Grid.Col key={i} span={{ xs: 12, sm: 4 }}>
-          <Title order={5}>{symbol} order depth</Title>
-          <OrderDepthTable orderDepth={orderDepth} midPrice={getMidPrice(left.algorithm, timestamp, symbol)} />
-        </Grid.Col>
-      ))}
+      {Object.entries(sharedRow.state.orderDepths)
+        .sort(([leftSymbol], [rightSymbol]) => leftSymbol.localeCompare(rightSymbol))
+        .map(([symbol, orderDepth]) => (
+          <Grid.Col key={symbol} span={{ xs: 12, sm: 4 }}>
+            <Title order={5}>{symbol} order depth</Title>
+            <OrderDepthTable orderDepth={orderDepth} midPrice={getMidPrice(left.algorithm, timestamp, symbol)} />
+          </Grid.Col>
+        ))}
       {Object.keys(sharedRow.state.orderDepths).length % 3 <= 2 && <Grid.Col span={{ xs: 12, sm: 4 }} />}
       {Object.keys(sharedRow.state.orderDepths).length % 3 <= 1 && <Grid.Col span={{ xs: 12, sm: 4 }} />}
       <Grid.Col span={{ xs: 12, sm: 4 }}>
