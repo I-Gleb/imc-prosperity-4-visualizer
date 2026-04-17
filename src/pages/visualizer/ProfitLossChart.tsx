@@ -9,6 +9,11 @@ export interface ProfitLossChartProps {
   algorithms?: { label: string; algorithm: Algorithm }[];
 }
 
+function hasValidProfitLossPoint(row: Algorithm['activityLogs'][number]): boolean {
+  const hasVisibleMidPrice = Number.isFinite(row.midPrice) && row.midPrice !== 0;
+  return hasVisibleMidPrice;
+}
+
 export function ProfitLossChart({ symbols, algorithms }: ProfitLossChartProps): ReactNode {
   const singleAlgorithm = useSingleAlgorithm();
   const algorithmEntries = algorithms ?? [{ label: 'Total', algorithm: singleAlgorithm! }];
@@ -17,6 +22,8 @@ export function ProfitLossChart({ symbols, algorithms }: ProfitLossChartProps): 
   algorithmEntries.forEach(({ label, algorithm }) => {
     const dataByTimestamp = new Map<number, number>();
     for (const row of algorithm.activityLogs) {
+      if (!hasValidProfitLossPoint(row)) continue;
+
       if (!dataByTimestamp.has(row.timestamp)) {
         dataByTimestamp.set(row.timestamp, row.profitLoss);
       } else {
@@ -27,7 +34,9 @@ export function ProfitLossChart({ symbols, algorithms }: ProfitLossChartProps): 
     series.push({
       type: 'line',
       name: label,
-      data: [...dataByTimestamp.keys()].map(timestamp => [timestamp, dataByTimestamp.get(timestamp)]),
+      data: [...dataByTimestamp.entries()]
+        .sort(([leftTimestamp], [rightTimestamp]) => leftTimestamp - rightTimestamp)
+        .map(([timestamp, profitLoss]) => [timestamp, profitLoss]),
     });
   });
 
@@ -35,12 +44,13 @@ export function ProfitLossChart({ symbols, algorithms }: ProfitLossChartProps): 
     const algorithm = algorithmEntries[0].algorithm;
 
     symbols.forEach(symbol => {
-      const data = [];
+      const data: [number, number][] = [];
 
       for (const row of algorithm.activityLogs) {
-        if (row.product === symbol) {
-          data.push([row.timestamp, row.profitLoss]);
-        }
+        if (row.product !== symbol) continue;
+        if (!hasValidProfitLossPoint(row)) continue;
+
+        data.push([row.timestamp, row.profitLoss]);
       }
 
       series.push({

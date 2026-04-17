@@ -37,7 +37,13 @@ function getColumnValues(columns: string[], indices: number[]): number[] {
   for (const index of indices) {
     const value = columns[index];
     if (value !== '') {
-      values.push(parseFloat(value));
+      const parsedValue = parseFloat(value);
+
+      // Backtester logs can contain "NaN" placeholders for missing book levels.
+      // Treat those as absent levels instead of propagating NaN into charts.
+      if (Number.isFinite(parsedValue)) {
+        values.push(parsedValue);
+      }
     }
   }
 

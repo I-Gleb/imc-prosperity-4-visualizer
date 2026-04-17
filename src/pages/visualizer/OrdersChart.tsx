@@ -13,7 +13,11 @@ export interface OrdersChartProps {
 }
 
 function hasVisiblePriceData(row: Algorithm['activityLogs'][number]): boolean {
-  return row.midPrice !== 0 || row.bidPrices.length > 0 || row.askPrices.length > 0;
+  if (Number.isFinite(row.midPrice) && row.midPrice !== 0) {
+    return true;
+  }
+
+  return row.bidPrices.some(Number.isFinite) || row.askPrices.some(Number.isFinite);
 }
 
 export function OrdersChart({ symbol, algorithm: providedAlgorithm, title }: OrdersChartProps): ReactNode {
