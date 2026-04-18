@@ -9,8 +9,8 @@ import { OrdersChart } from './OrdersChart.tsx';
 import { PositionChart } from './PositionChart.tsx';
 import { ProfitLossChart } from './ProfitLossChart.tsx';
 import { TimestampsCard } from './TimestampsCard.tsx';
-import { VisualizerCard } from './VisualizerCard.tsx';
 import { assertAlgorithmsComparable, ComparisonDataError, getFinalProfitLoss, getSortedSymbols } from './utils.ts';
+import { VisualizerCard } from './VisualizerCard.tsx';
 
 export function ComparisonPage(): ReactNode {
   const visualizer = useStore(state => state.visualizer);

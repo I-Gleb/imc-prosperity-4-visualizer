@@ -1,4 +1,4 @@
-import { Algorithm, AlgorithmDataRow } from '../../models.ts';
+import { Algorithm, AlgorithmDataRow, ProsperitySymbol } from '../../models.ts';
 
 export class ComparisonDataError extends Error {
   public constructor(
@@ -58,6 +58,27 @@ export function getFinalProfitLoss(algorithm: Algorithm): number {
   }
 
   return profitLoss;
+}
+
+export function getPositionLimit(algorithm: Algorithm, symbol: ProsperitySymbol): number {
+  const knownLimits: Record<string, number> = {
+    TOMATOES: 80,
+    EMERALDS: 80,
+    ASH_COATED_OSMIUM: 80,
+    INTARIAN_PEPPER_ROOT: 80,
+  };
+
+  if (knownLimits[symbol] !== undefined) {
+    return knownLimits[symbol];
+  }
+
+  // This code will be hit when a new product is added to the competition and the visualizer isn't updated yet
+  // In that case the visualizer doesn't know the real limit yet, so we make a guess based on the algorithm's positions
+  const positions = algorithm.data.map(row => row.state.position[symbol] || 0);
+  const minPosition = Math.min(...positions);
+  const maxPosition = Math.max(...positions);
+
+  return Math.max(Math.abs(minPosition), maxPosition);
 }
 
 export function getRowsByTimestamp(algorithm: Algorithm): Record<number, AlgorithmDataRow> {

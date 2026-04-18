@@ -1,7 +1,7 @@
 import Highcharts from 'highcharts';
 import { ReactNode } from 'react';
-import { ProsperitySymbol } from '../../models.ts';
 import { useSingleAlgorithm } from '../../hooks/use-single-algorithm.ts';
+import { ProsperitySymbol } from '../../models.ts';
 import { Chart } from './Chart.tsx';
 
 export interface TransportChartProps {

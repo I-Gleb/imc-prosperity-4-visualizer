@@ -50,9 +50,20 @@ interface ChartProps {
   min?: number;
   max?: number;
   controls?: ReactNode;
+  constructorType?: 'chart' | 'stockChart';
+  useTimestampXAxis?: boolean;
 }
 
-export function Chart({ title, options, series, min, max, controls }: ChartProps): ReactNode {
+export function Chart({
+  title,
+  options,
+  series,
+  min,
+  max,
+  controls,
+  constructorType = 'stockChart',
+  useTimestampXAxis = true,
+}: ChartProps): ReactNode {
   const colorScheme = useActualColorScheme();
 
   const fullOptions = useMemo((): Highcharts.Options => {
@@ -63,16 +74,20 @@ export function Chart({ title, options, series, min, max, controls }: ChartProps
         animation: false,
         height: 400,
         zooming: {
-          type: 'x',
+          type: useTimestampXAxis ? 'x' : 'xy',
         },
         panning: {
           enabled: true,
-          type: 'x',
+          type: useTimestampXAxis ? 'x' : 'xy',
         },
         panKey: 'shift',
         numberFormatter: formatNumber,
         events: {
           load() {
+            if (!useTimestampXAxis) {
+              return;
+            }
+
             Highcharts.addEvent(this.tooltip, 'headerFormatter', (e: any) => {
               if (e.isFooter) {
                 return true;
@@ -125,16 +140,20 @@ export function Chart({ title, options, series, min, max, controls }: ChartProps
         },
       },
       xAxis: {
-        type: 'datetime',
-        title: {
-          text: 'Timestamp',
-        },
         crosshair: {
           width: 1,
         },
-        labels: {
-          formatter: params => formatNumber(params.value as number),
-        },
+        ...(useTimestampXAxis
+          ? {
+              type: 'datetime',
+              title: {
+                text: 'Timestamp',
+              },
+              labels: {
+                formatter: (params: Highcharts.AxisLabelsFormatterContextObject) => formatNumber(params.value as number),
+              },
+            }
+          : {}),
       },
       yAxis: {
         opposite: false,
@@ -144,7 +163,7 @@ export function Chart({ title, options, series, min, max, controls }: ChartProps
       },
       tooltip: {
         split: false,
-        shared: true,
+        shared: useTimestampXAxis,
         outside: true,
       },
       legend: {
@@ -164,7 +183,7 @@ export function Chart({ title, options, series, min, max, controls }: ChartProps
     };
 
     return merge(themeOptions, chartOptions);
-  }, [colorScheme, title, options, series, min, max]);
+  }, [colorScheme, title, options, series, min, max, useTimestampXAxis]);
 
   return (
     <VisualizerCard p={0}>
@@ -173,7 +192,7 @@ export function Chart({ title, options, series, min, max, controls }: ChartProps
           {controls}
         </Box>
       )}
-      <HighchartsReact highcharts={Highcharts} constructorType={'stockChart'} options={fullOptions} immutable />
+      <HighchartsReact highcharts={Highcharts} constructorType={constructorType} options={fullOptions} immutable />
     </VisualizerCard>
   );
 }

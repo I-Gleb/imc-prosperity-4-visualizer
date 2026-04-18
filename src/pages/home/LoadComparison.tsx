@@ -5,9 +5,9 @@ import { FormEvent, ReactNode, useCallback, useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ErrorAlert } from '../../components/ErrorAlert.tsx';
 import { useAsync } from '../../hooks/use-async.ts';
-import { assertAlgorithmsComparable } from '../visualizer/utils.ts';
 import { useStore } from '../../store.ts';
 import { getAlgorithmLabelFromUrl, loadAlgorithmFromFile, loadAlgorithmFromUrl } from '../../utils/loaders.ts';
+import { assertAlgorithmsComparable } from '../visualizer/utils.ts';
 import { HomeCard } from './HomeCard.tsx';
 
 type InputMode = 'file' | 'url';

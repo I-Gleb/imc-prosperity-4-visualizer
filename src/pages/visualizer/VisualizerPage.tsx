@@ -10,16 +10,17 @@ import { EnvironmentChart } from './EnvironmentChart.tsx';
 import { OrdersChart } from './OrdersChart.tsx';
 import { PlainValueObservationChart } from './PlainValueObservationChart.tsx';
 import { PositionChart } from './PositionChart.tsx';
+import { PositionPriceChart } from './PositionPriceChart.tsx';
 import { ProfitLossChart } from './ProfitLossChart.tsx';
 import { TimestampsCard } from './TimestampsCard.tsx';
 import { TransportChart } from './TransportChart.tsx';
-import { VisualizerCard } from './VisualizerCard.tsx';
 import {
   getConversionProducts,
   getFinalProfitLoss,
   getSortedPlainValueObservationSymbols,
   getSortedSymbols,
 } from './utils.ts';
+import { VisualizerCard } from './VisualizerCard.tsx';
 
 export function VisualizerPage(): ReactNode {
   const visualizer = useStore(state => state.visualizer);
@@ -40,6 +41,12 @@ export function VisualizerPage(): ReactNode {
     symbolColumns.push(
       <Grid.Col key={`${symbol} - candlestick`} span={{ xs: 12, sm: 6 }}>
         <CandlestickChart symbol={symbol} />
+      </Grid.Col>,
+    );
+
+    symbolColumns.push(
+      <Grid.Col key={`${symbol} - position price`} span={{ xs: 12, sm: 6 }}>
+        <PositionPriceChart symbol={symbol} />
       </Grid.Col>,
     );
 
