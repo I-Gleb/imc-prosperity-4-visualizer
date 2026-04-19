@@ -13,6 +13,7 @@ import { PositionChart } from './PositionChart.tsx';
 import { PositionPriceChart } from './PositionPriceChart.tsx';
 import { ProfitLossChart } from './ProfitLossChart.tsx';
 import { TimestampsCard } from './TimestampsCard.tsx';
+import { TradeAnalyticsSection } from './TradeAnalyticsSection.tsx';
 import { TransportChart } from './TransportChart.tsx';
 import {
   getConversionProducts,
@@ -106,6 +107,9 @@ export function VisualizerPage(): ReactNode {
           <PositionChart symbols={sortedSymbols} />
         </Grid.Col>
         {symbolColumns}
+        <Grid.Col span={12}>
+          <TradeAnalyticsSection />
+        </Grid.Col>
         <Grid.Col span={12}>
           <TimestampsCard />
         </Grid.Col>
