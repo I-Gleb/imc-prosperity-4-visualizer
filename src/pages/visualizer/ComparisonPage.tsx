@@ -7,8 +7,10 @@ import { formatNumber } from '../../utils/format.ts';
 import { CandlestickChart } from './CandlestickChart.tsx';
 import { OrdersChart } from './OrdersChart.tsx';
 import { PositionChart } from './PositionChart.tsx';
+import { PositionPriceChart } from './PositionPriceChart.tsx';
 import { ProfitLossChart } from './ProfitLossChart.tsx';
 import { TimestampsCard } from './TimestampsCard.tsx';
+import { TradeAnalyticsSection } from './TradeAnalyticsSection.tsx';
 import { assertAlgorithmsComparable, ComparisonDataError, getFinalProfitLoss, getSortedSymbols } from './utils.ts';
 import { VisualizerCard } from './VisualizerCard.tsx';
 
@@ -46,6 +48,18 @@ export function ComparisonPage(): ReactNode {
     symbolColumns.push(
       <Grid.Col key={`${symbol} - movement`} span={12}>
         <CandlestickChart symbol={symbol} algorithm={left} />
+      </Grid.Col>,
+    );
+
+    symbolColumns.push(
+      <Grid.Col key={`${symbol} - position price - ${aliases.left}`} span={{ xs: 12, sm: 6 }}>
+        <PositionPriceChart symbol={symbol} algorithm={left} title={`${symbol} - ${aliases.left}`} />
+      </Grid.Col>,
+    );
+
+    symbolColumns.push(
+      <Grid.Col key={`${symbol} - position price - ${aliases.right}`} span={{ xs: 12, sm: 6 }}>
+        <PositionPriceChart symbol={symbol} algorithm={right} title={`${symbol} - ${aliases.right}`} />
       </Grid.Col>,
     );
 
@@ -140,6 +154,12 @@ export function ComparisonPage(): ReactNode {
           />
         </Grid.Col>
         {symbolColumns}
+        <Grid.Col span={{ xs: 12, sm: 6 }}>
+          <TradeAnalyticsSection algorithm={left} heading={`${aliases.left} trade analytics`} />
+        </Grid.Col>
+        <Grid.Col span={{ xs: 12, sm: 6 }}>
+          <TradeAnalyticsSection algorithm={right} heading={`${aliases.right} trade analytics`} />
+        </Grid.Col>
         <Grid.Col span={12}>
           <TimestampsCard
             strategies={[

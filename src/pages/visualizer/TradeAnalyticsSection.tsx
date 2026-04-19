@@ -218,8 +218,13 @@ function MetricGroup({
   );
 }
 
-export function TradeAnalyticsSection(): ReactNode {
-  const algorithm = useSingleAlgorithm()!;
+interface TradeAnalyticsSectionProps {
+  algorithm?: Algorithm;
+  heading?: string;
+}
+
+export function TradeAnalyticsSection({ algorithm: providedAlgorithm, heading = 'Trade analytics' }: TradeAnalyticsSectionProps): ReactNode {
+  const algorithm = providedAlgorithm ?? useSingleAlgorithm()!;
 
   const summaries = useMemo(() => {
     const summaryByProduct = summarizeTrades(algorithm);
@@ -228,7 +233,7 @@ export function TradeAnalyticsSection(): ReactNode {
 
   if (summaries.length === 0) {
     return (
-      <VisualizerCard title="Trade analytics">
+      <VisualizerCard title={heading}>
         <Text>No trade history is available for this run.</Text>
       </VisualizerCard>
     );
@@ -236,12 +241,14 @@ export function TradeAnalyticsSection(): ReactNode {
 
   return (
     <Stack>
-      <Text size="sm" c="dimmed">
-        Passive and aggressive trades are classified from trade price versus an EMA fair-value band at the trade
-        timestamp: passive fills sit outside EMA mid plus or minus one quarter of EMA spread, while trades at or inside
-        the band count as aggressive. Missing quotes use an EMA spread estimate, seeded with{' '}
-        {formatNumber(INITIAL_SPREAD_ESTIMATE)} and smoothed with EMA span {formatNumber(EMA_SPAN)}.
-      </Text>
+      <VisualizerCard title={heading}>
+        <Text size="sm" c="dimmed">
+          Passive and aggressive trades are classified from trade price versus an EMA fair-value band at the trade
+          timestamp: passive fills sit outside EMA mid plus or minus one quarter of EMA spread, while trades at or inside
+          the band count as aggressive. Missing quotes use an EMA spread estimate, seeded with{' '}
+          {formatNumber(INITIAL_SPREAD_ESTIMATE)} and smoothed with EMA span {formatNumber(EMA_SPAN)}.
+        </Text>
+      </VisualizerCard>
       {summaries.map(([product, summary]) => {
         const totalPnl = getTotalPnl(summary);
         const totalEdge = getTotalEdge(summary);
