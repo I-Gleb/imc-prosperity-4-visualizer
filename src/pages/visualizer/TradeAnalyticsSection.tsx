@@ -1,11 +1,13 @@
 import { Grid, Paper, Stack, Text, Title } from '@mantine/core';
 import { ReactNode, useMemo } from 'react';
 import { useSingleAlgorithm } from '../../hooks/use-single-algorithm.ts';
-import { Algorithm, ResultLogTradeHistoryItem } from '../../models.ts';
+import { Algorithm } from '../../models.ts';
 import { formatNumber } from '../../utils/format.ts';
 import { VisualizerCard } from './VisualizerCard.tsx';
 
-const AVERAGE_SPREAD = 16;
+const EMA_SPAN = 20;
+const EMA_ALPHA = 2 / (EMA_SPAN + 1);
+const INITIAL_SPREAD_ESTIMATE = 16;
 
 interface TradeAnalyticsSummary {
   totalTrades: number;
@@ -43,30 +45,65 @@ function getBestPrice(value: number | undefined): number | null {
   return Number.isFinite(value) ? (value as number) : null;
 }
 
-function getMidPriceAtTrade(algorithm: Algorithm, trade: ResultLogTradeHistoryItem): number | null {
-  const matchingRows = algorithm.activityLogs.filter(row => row.product === trade.symbol && row.timestamp === trade.timestamp);
-  const row = matchingRows[matchingRows.length - 1];
-
-  if (!row) {
-    return null;
+function updateEma(previous: number | null, sample: number | null): number | null {
+  if (sample === null || !Number.isFinite(sample)) {
+    return previous;
   }
 
-  const bestBid = getBestPrice(row.bidPrices[0]);
-  const bestAsk = getBestPrice(row.askPrices[0]);
+  if (previous === null) {
+    return sample;
+  }
 
-  if (bestBid === null && bestAsk === null) {
-    return Number.isFinite(row.midPrice) ? row.midPrice : null;
+  return previous + EMA_ALPHA * (sample - previous);
+}
+
+function getObservedMidPrice(
+  row: Algorithm['activityLogs'][number],
+  bestBid: number | null,
+  bestAsk: number | null,
+  spreadEstimate: number,
+): number | null {
+  if (Number.isFinite(row.midPrice) && row.midPrice !== 0) {
+    return row.midPrice;
+  }
+
+  if (bestBid !== null && bestAsk !== null) {
+    return (bestBid + bestAsk) / 2;
   }
 
   if (bestBid === null && bestAsk !== null) {
-    return (bestAsk - AVERAGE_SPREAD + bestAsk) / 2;
+    return bestAsk - spreadEstimate / 2;
   }
 
   if (bestBid !== null && bestAsk === null) {
-    return (bestBid + bestBid + AVERAGE_SPREAD) / 2;
+    return bestBid + spreadEstimate / 2;
   }
 
-  return Number.isFinite(row.midPrice) ? row.midPrice : ((bestBid as number) + (bestAsk as number)) / 2;
+  return null;
+}
+
+function buildTradePriceReferences(algorithm: Algorithm): Map<string, { emaMid: number | null; emaSpread: number }> {
+  const references = new Map<string, { emaMid: number | null; emaSpread: number }>();
+  const stateByProduct = new Map<string, { emaMid: number | null; emaSpread: number | null }>();
+
+  for (const row of algorithm.activityLogs) {
+    const currentState = stateByProduct.get(row.product) ?? {
+      emaMid: null,
+      emaSpread: null,
+    };
+
+    const bestBid = getBestPrice(row.bidPrices[0]);
+    const bestAsk = getBestPrice(row.askPrices[0]);
+    const observedSpread = bestBid !== null && bestAsk !== null ? bestAsk - bestBid : null;
+    const emaSpread = updateEma(currentState.emaSpread, observedSpread) ?? INITIAL_SPREAD_ESTIMATE;
+    const observedMidPrice = getObservedMidPrice(row, bestBid, bestAsk, emaSpread);
+    const emaMid = updateEma(currentState.emaMid, observedMidPrice);
+
+    stateByProduct.set(row.product, { emaMid, emaSpread });
+    references.set(`${row.product}:${row.timestamp}`, { emaMid, emaSpread });
+  }
+
+  return references;
 }
 
 function getTotalPnl(summary: TradeAnalyticsSummary): number {
@@ -87,6 +124,7 @@ function divideOrZero(numerator: number, denominator: number): number {
 
 function summarizeTrades(algorithm: Algorithm): Record<string, TradeAnalyticsSummary> {
   const summaryByProduct: Record<string, TradeAnalyticsSummary> = {};
+  const tradePriceReferences = buildTradePriceReferences(algorithm);
 
   for (const trade of algorithm.tradeHistory) {
     const summary = (summaryByProduct[trade.symbol] ??= createSummary());
@@ -103,7 +141,7 @@ function summarizeTrades(algorithm: Algorithm): Record<string, TradeAnalyticsSum
       continue;
     }
 
-    const midPriceAtTrade = getMidPriceAtTrade(algorithm, trade);
+    const midPriceAtTrade = tradePriceReferences.get(`${trade.symbol}:${trade.timestamp}`)?.emaMid ?? null;
     if (midPriceAtTrade === null) {
       continue;
     }
@@ -193,9 +231,9 @@ export function TradeAnalyticsSection(): ReactNode {
   return (
     <Stack>
       <Text size="sm" c="dimmed">
-        Passive and aggressive trades are classified exactly from trade price versus mid price at the trade timestamp,
-        with the same missing-quote fallback spread of {formatNumber(AVERAGE_SPREAD)}. Trade PnL uses the last mid seen at
-        a submitted trade for that product, matching your script.
+        Passive and aggressive trades are classified from trade price versus an EMA mid at the trade timestamp. Missing
+        quotes use an EMA spread estimate, seeded with {formatNumber(INITIAL_SPREAD_ESTIMATE)} and smoothed with EMA span{' '}
+        {formatNumber(EMA_SPAN)}.
       </Text>
       {summaries.map(([product, summary]) => {
         const totalPnl = getTotalPnl(summary);
@@ -263,17 +301,17 @@ export function TradeAnalyticsSection(): ReactNode {
                   {
                     label: 'Trade PnL',
                     value: formatNumber(totalPnl, 2),
-                    hint: 'Cash plus remaining position marked to the last trade-time mid.',
+                    hint: 'Cash plus remaining position marked to the last trade-time EMA mid.',
                   },
                   {
                     label: 'Spread capture',
                     value: formatNumber(summary.makerProfit, 2),
-                    hint: 'PnL attributed to passive fills versus mid price.',
+                    hint: 'PnL attributed to passive fills versus the EMA mid price.',
                   },
                   {
                     label: 'Aggression edge',
                     value: formatNumber(summary.takerLoss, 2),
-                    hint: 'PnL attributed to aggressive fills versus mid price.',
+                    hint: 'PnL attributed to aggressive fills versus the EMA mid price.',
                   },
                   {
                     label: 'Market movement',
