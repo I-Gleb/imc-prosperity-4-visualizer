@@ -141,12 +141,18 @@ function summarizeTrades(algorithm: Algorithm): Record<string, TradeAnalyticsSum
       continue;
     }
 
-    const midPriceAtTrade = tradePriceReferences.get(`${trade.symbol}:${trade.timestamp}`)?.emaMid ?? null;
+    const tradePriceReference = tradePriceReferences.get(`${trade.symbol}:${trade.timestamp}`);
+    const midPriceAtTrade = tradePriceReference?.emaMid ?? null;
+    const spreadAtTrade = tradePriceReference?.emaSpread ?? INITIAL_SPREAD_ESTIMATE;
     if (midPriceAtTrade === null) {
       continue;
     }
 
-    const isPassive = (side === 'sell' && trade.price >= midPriceAtTrade) || (side === 'buy' && trade.price <= midPriceAtTrade);
+    const quarterSpread = spreadAtTrade / 4;
+    const passiveBuyThreshold = midPriceAtTrade - quarterSpread;
+    const passiveSellThreshold = midPriceAtTrade + quarterSpread;
+    const isPassive =
+      (side === 'sell' && trade.price >= passiveSellThreshold) || (side === 'buy' && trade.price <= passiveBuyThreshold);
 
     summary.totalTrades += 1;
     summary.totalTradingVolume += trade.quantity;
@@ -231,9 +237,10 @@ export function TradeAnalyticsSection(): ReactNode {
   return (
     <Stack>
       <Text size="sm" c="dimmed">
-        Passive and aggressive trades are classified from trade price versus an EMA mid at the trade timestamp. Missing
-        quotes use an EMA spread estimate, seeded with {formatNumber(INITIAL_SPREAD_ESTIMATE)} and smoothed with EMA span{' '}
-        {formatNumber(EMA_SPAN)}.
+        Passive and aggressive trades are classified from trade price versus an EMA fair-value band at the trade
+        timestamp: passive fills sit outside EMA mid plus or minus one quarter of EMA spread, while trades at or inside
+        the band count as aggressive. Missing quotes use an EMA spread estimate, seeded with{' '}
+        {formatNumber(INITIAL_SPREAD_ESTIMATE)} and smoothed with EMA span {formatNumber(EMA_SPAN)}.
       </Text>
       {summaries.map(([product, summary]) => {
         const totalPnl = getTotalPnl(summary);
@@ -276,12 +283,12 @@ export function TradeAnalyticsSection(): ReactNode {
                   {
                     label: 'Passive volume',
                     value: `${formatNumber(summary.fills)} (${formatNumber(passiveShare, 1)}%)`,
-                    hint: 'Maker volume and its share of your total submitted volume.',
+                    hint: 'Volume filled outside the EMA mid plus or minus quarter-spread band.',
                   },
                   {
                     label: 'Aggressive volume',
                     value: `${formatNumber(summary.takes)} (${formatNumber(aggressiveShare, 1)}%)`,
-                    hint: 'Taker volume and its share of your total submitted volume.',
+                    hint: 'Volume filled at or inside the EMA mid plus or minus quarter-spread band.',
                   },
                   {
                     label: 'Passive fills',
