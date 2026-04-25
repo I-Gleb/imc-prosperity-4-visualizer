@@ -1,4 +1,4 @@
-import { Group, NumberInput, Slider, SliderProps, Text, Title } from '@mantine/core';
+import { Button, Group, NumberInput, Slider, SliderProps, Stack, Text, Title } from '@mantine/core';
 import { useHotkeys } from '@mantine/hooks';
 import { KeyboardEvent, ReactNode, useEffect, useState } from 'react';
 import { useSingleAlgorithm } from '../../hooks/use-single-algorithm.ts';
@@ -12,6 +12,51 @@ export interface TimestampsCardProps {
   strategies?: { label: string; algorithm: Algorithm }[];
 }
 
+type TradeEventKind = 'own' | 'market' | 'any';
+
+function collectTradeEventTimestamps(algorithm: Algorithm, kind: TradeEventKind): number[] {
+  const timestamps = new Set<number>();
+
+  for (const row of algorithm.data) {
+    const tradeGroups =
+      kind === 'own'
+        ? [row.state.ownTrades]
+        : kind === 'market'
+          ? [row.state.marketTrades]
+          : [row.state.ownTrades, row.state.marketTrades];
+
+    for (const tradesBySymbol of tradeGroups) {
+      for (const trades of Object.values(tradesBySymbol)) {
+        for (const trade of trades) {
+          timestamps.add(trade.timestamp);
+        }
+      }
+    }
+  }
+
+  return [...timestamps].sort((a, b) => a - b);
+}
+
+function findAdjacentTimestamp(timestamps: number[], currentTimestamp: number, direction: 'previous' | 'next'): number | undefined {
+  if (direction === 'previous') {
+    for (let i = timestamps.length - 1; i >= 0; i--) {
+      if (timestamps[i] < currentTimestamp) {
+        return timestamps[i];
+      }
+    }
+
+    return undefined;
+  }
+
+  for (const timestamp of timestamps) {
+    if (timestamp > currentTimestamp) {
+      return timestamp;
+    }
+  }
+
+  return undefined;
+}
+
 export function TimestampsCard({ strategies }: TimestampsCardProps): ReactNode {
   const singleAlgorithm = useSingleAlgorithm();
   const strategyEntries = strategies ?? [{ label: 'Strategy', algorithm: singleAlgorithm! }];
@@ -21,6 +66,15 @@ export function TimestampsCard({ strategies }: TimestampsCardProps): ReactNode {
   const timestampMin = primaryAlgorithm.data[0].state.timestamp;
   const timestampMax = primaryAlgorithm.data[primaryAlgorithm.data.length - 1].state.timestamp;
   const timestampStep = primaryAlgorithm.data[1].state.timestamp - primaryAlgorithm.data[0].state.timestamp;
+  const ownTradeTimestamps = collectTradeEventTimestamps(primaryAlgorithm, 'own').filter(
+    value => value >= timestampMin && value <= timestampMax,
+  );
+  const marketTradeTimestamps = collectTradeEventTimestamps(primaryAlgorithm, 'market').filter(
+    value => value >= timestampMin && value <= timestampMax,
+  );
+  const anyTradeTimestamps = collectTradeEventTimestamps(primaryAlgorithm, 'any').filter(
+    value => value >= timestampMin && value <= timestampMax,
+  );
 
   const [timestamp, setTimestamp] = useState(timestampMin);
   const [inputValue, setInputValue] = useState<number | string>(timestampMin);
@@ -58,6 +112,12 @@ export function TimestampsCard({ strategies }: TimestampsCardProps): ReactNode {
     ['ArrowRight', () => setTimestamp(timestamp === timestampMax ? timestamp : timestamp + timestampStep)],
   ]);
 
+  const jumpControls: { key: TradeEventKind; label: string; timestamps: number[] }[] = [
+    { key: 'own', label: 'Own trades', timestamps: ownTradeTimestamps },
+    { key: 'market', label: 'Market trades', timestamps: marketTradeTimestamps },
+    { key: 'any', label: 'Any trade', timestamps: anyTradeTimestamps },
+  ];
+
   return (
     <VisualizerCard>
       <Group align="center" gap="xs" mb="xs">
@@ -79,6 +139,37 @@ export function TimestampsCard({ strategies }: TimestampsCardProps): ReactNode {
           styles={{ input: { fontWeight: 700, fontSize: 'var(--mantine-font-size-sm)' } }}
         />
       </Group>
+
+      <Stack gap="xs" mb="md">
+        {jumpControls.map(control => {
+          const previousTimestamp = findAdjacentTimestamp(control.timestamps, timestamp, 'previous');
+          const nextTimestamp = findAdjacentTimestamp(control.timestamps, timestamp, 'next');
+
+          return (
+            <Group key={control.key} gap="xs" wrap="wrap">
+              <Text fw={500} size="sm" miw={100}>
+                {control.label}
+              </Text>
+              <Button
+                size="compact-sm"
+                variant="light"
+                disabled={previousTimestamp === undefined}
+                onClick={() => previousTimestamp !== undefined && setTimestamp(previousTimestamp)}
+              >
+                Previous
+              </Button>
+              <Button
+                size="compact-sm"
+                variant="light"
+                disabled={nextTimestamp === undefined}
+                onClick={() => nextTimestamp !== undefined && setTimestamp(nextTimestamp)}
+              >
+                Next
+              </Button>
+            </Group>
+          );
+        })}
+      </Stack>
 
       <Slider
         min={timestampMin}
